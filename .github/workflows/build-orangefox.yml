@@ -16,13 +16,14 @@ jobs:
           libc6-dev-i386 x11proto-core-dev libx11-dev lib32z1-dev \
           libgl1-mesa-dev libxml2-utils xsltproc unzip fontconfig repo ccache
 
-    - name: 💾 Add swap (CRITICAL)
-      run: |
-        sudo fallocate -l 12G /swapfile
-        sudo chmod 600 /swapfile
-        sudo mkswap /swapfile
-        sudo swapon /swapfile
-        free -h
+- name: 💾 Setup extra swap
+  run: |
+    sudo fallocate -l 10G /swapfile2
+    sudo chmod 600 /swapfile2
+    sudo mkswap /swapfile2
+    sudo swapon /swapfile2 || true
+    free -h
+    
 
     - name: 🔄 Sync source
       run: |
