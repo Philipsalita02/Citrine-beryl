@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: 📦 Setup deps
+    - name: 📦 Install dependencies
       run: |
         sudo apt update
         sudo apt install -y \
@@ -16,16 +16,15 @@ jobs:
           libc6-dev-i386 x11proto-core-dev libx11-dev lib32z1-dev \
           libgl1-mesa-dev libxml2-utils xsltproc unzip fontconfig repo ccache
 
-- name: 💾 Setup extra swap
-  run: |
-    sudo fallocate -l 10G /swapfile2
-    sudo chmod 600 /swapfile2
-    sudo mkswap /swapfile2
-    sudo swapon /swapfile2 || true
-    free -h
-    
+    - name: 💾 Setup extra swap (safe for GitHub Actions)
+      run: |
+        sudo fallocate -l 10G /swapfile2
+        sudo chmod 600 /swapfile2
+        sudo mkswap /swapfile2
+        sudo swapon /swapfile2 || true
+        free -h
 
-    - name: 🔄 Sync source
+    - name: 🔄 Sync OrangeFox source
       run: |
         mkdir -p ~/fox
         cd ~/fox
@@ -33,19 +32,18 @@ jobs:
         cd sync
         ./orangefox_sync.sh --branch 14.1 --path ~/fox_14.1
 
-    - name: 📱 Device tree
+    - name: 📱 Clone device tree (beryl)
       run: |
         cd ~/fox_14.1
         git clone https://github.com/IQ-HARRY7/android_device_xiaomi_beryl.git device/xiaomi/beryl
 
-    - name: 🧠 Patch BoardConfig (safe)
+    - name: 🧠 Patch BoardConfig (fix header version safely)
       run: |
         FILE=~/fox_14.1/device/xiaomi/beryl/BoardConfig.mk
-
         grep -q "BOARD_BOOT_HEADER_VERSION" $FILE || \
         echo "BOARD_BOOT_HEADER_VERSION := 4" >> $FILE
 
-    - name: ⚙️ Setup build env
+    - name: ⚙️ Setup build environment
       run: |
         cd ~/fox_14.1
         source build/envsetup.sh
@@ -56,12 +54,12 @@ jobs:
         export NINJA_ARGS="-j2"
         export LLVM_PARALLEL_LINK_JOBS=1
 
-    - name: 🏗️ Build vendorboot
+    - name: 🏗️ Build vendorbootimage
       run: |
         cd ~/fox_14.1
         mka vendorbootimage -j2
 
-    - name: 📤 Upload vendorboot
+    - name: 📤 Upload vendorboot image
       uses: actions/upload-artifact@v4
       with:
         name: vendorboot-beryl
